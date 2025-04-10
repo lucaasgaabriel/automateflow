@@ -17,4 +17,4 @@
 - Auth: JWT com roles (admin, dev, user)
 - CI/CD: GitHub Actions + Docker + Terraform (IaC)
 - Infra: Dockerizado, com variáveis de ambiente via .env + Docker Compose
-- Frontend (opcional): React/Next.js com dashboard para gerenciar tudo
+- Frontend: React/Next.js com dashboard para gerenciar tudo
