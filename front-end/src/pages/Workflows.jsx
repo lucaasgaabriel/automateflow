@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   getWorkflows,
   createWorkflow,
@@ -10,32 +11,51 @@ export default function Workflows() {
   const [nome, setNome] = useState("");
   const [editando, setEditando] = useState(null);
 
-  function adicionarWorkflow(e) {
-    e.preventDefault();
+  // Carregar todos os workflows ao montar o componente
+  useEffect(() => {
+    carregarWorkflows();
+  }, []);
 
+  async function carregarWorkflows() {
+    try {
+      const res = await getWorkflows();
+      setWorkflows(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar workflows:", err);
+    }
+  }
+
+  async function adicionarWorkflow(e) {
+    e.preventDefault();
     if (!nome) return;
 
-    if (editando !== null) {
-      const atualizados = [...workflows];
-      atualizados[editando].nome = nome;
-      setWorkflows(atualizados);
+    try {
+      if (editando) {
+        await updateWorkflow(editando._id, { nome });
+      } else {
+        await createWorkflow({ nome });
+      }
+
+      setNome("");
       setEditando(null);
-    } else {
-      setWorkflows([...workflows, { nome }]);
+      carregarWorkflows();
+    } catch (err) {
+      console.error("Erro ao salvar workflow:", err);
     }
-
-    setNome("");
   }
 
-  function editarWorkflow(index) {
-    setNome(workflows[index].nome);
-    setEditando(index);
+  function prepararEdicao(wf) {
+    setNome(wf.nome);
+    setEditando(wf);
   }
 
-  function removerWorkflow(index) {
-    const atualizados = workflows.filter((_, i) => i !== index);
-    setWorkflows(atualizados);
-    setEditando(null);
+  async function remover(id) {
+    try {
+      await deleteWorkflow(id);
+      carregarWorkflows();
+    } catch (err) {
+      console.error("Erro ao deletar workflow:", err);
+    }
   }
 
   return (
@@ -54,29 +74,29 @@ export default function Workflows() {
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {editando !== null ? "Atualizar" : "Adicionar"}
+          {editando ? "Atualizar" : "Adicionar"}
         </button>
       </form>
 
       {workflows.length === 0 ? (
-        <p className="text-gray-500">Nenhum workflow criado.</p>
+        <p className="text-gray-500">Nenhum workflow cadastrado.</p>
       ) : (
         <ul className="space-y-2">
-          {workflows.map((wf, i) => (
+          {workflows.map((wf) => (
             <li
-              key={i}
+              key={wf._id}
               className="bg-white shadow p-4 flex justify-between items-center rounded"
             >
               <span>{wf.nome}</span>
               <div className="space-x-2">
                 <button
-                  onClick={() => editarWorkflow(i)}
+                  onClick={() => prepararEdicao(wf)}
                   className="text-yellow-600 hover:underline"
                 >
                   Editar
                 </button>
                 <button
-                  onClick={() => removerWorkflow(i)}
+                  onClick={() => remover(wf._id)}
                   className="text-red-600 hover:underline"
                 >
                   Remover
